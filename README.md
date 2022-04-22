@@ -13,7 +13,8 @@ run <- tetris(X,alpha=5,beta=1)
 To recover point estimates of the factor indicator matrix and loadings matrix, you can run:
 
 ```
-A <- choose.A(run,alpha_IBP=5)
+# alpha_IBP is the hyperparameter; S is the number of studies
+A <- choose.A(run,alpha_IBP=5,S=3)
 run_fixed <- tetris(X,alpha=5,beta=1,fixed=TRUE,A.fixed=A)
 Lambda <- getLambda(run_fixed,A)
 ```
