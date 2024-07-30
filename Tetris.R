@@ -879,7 +879,11 @@ bitsToInt<-function(x) {
 
 # Helper function: compute density under IBP
 IBP.prob <- function(A,alpha_IBP) {
-  if (sum(A)==0) { return(dpois(0,alpha_IBP)) }
+  if (is.null(dim(A))) {
+    if (sum(A) == 0) { return(dpois(0,alpha_IBP)) }
+  } else {
+    if (sum(colSums(A))==0) { return(dpois(0,alpha_IBP)) }
+  }
   A <- A[,which(colSums(A)>0),drop=F]
   Kplus <- ncol(A)
   N <- nrow(A)
