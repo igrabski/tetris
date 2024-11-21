@@ -31,7 +31,7 @@ new_control <- function(nrun = 10000, burn = 8000, thin = 1,
 # Outputs: out = list of post-burn-in chains for the loadings matrix Lambda, the errors Psi, the latent factors l_s
 #                for each study s, and the factor indicator matrix A
 tetris <- function(X_s,  alpha, beta, trace = TRUE, nprint = 1000, initial = 0, fixed = FALSE, A_fixed = 0,
-                         control = list(...), ...)
+                         nrun = NULL, burn = NULL, control = list(...), ...)
 {
   ## Read in data
   S <- length(X_s)                      # number of studies
@@ -41,9 +41,13 @@ tetris <- function(X_s,  alpha, beta, trace = TRUE, nprint = 1000, initial = 0, 
   
   ## Set hyperparameters (see new_control() documentation)
   control <- new_control()
-  nrun <- control$nrun
+  if (is.null(nrun)) {
+    nrun <- control$nrun
+  }
+  if (is.null(burn)) {
+    burn <- control$burn
+  }
   thin <- control$thin
-  burn <- control$burn
   sp  <- (nrun - burn) / thin
   apsi <- control$apsi 
   bpsi<- control$bpsi 
@@ -966,21 +970,21 @@ eval_g <- function(Lambda,Sigmas,A) {
 # Input: out = posterior output from running tetris() with fixed=T
 #        A = fixed A when running tetris()
 # Output: Lambda point estimate
-getLambda <- function(out,A) {
+getLambda <- function(out,A,num_samps=2000) {
   P <- nrow(out$Lambda[[1]])
   K <- ncol(A)
   S <- nrow(A)
   
   Sigmas <- list()
   for (s in 1:S) {
-    LLTs <- array(0,dim=c(P,P,2000)) 
-    for (i in 1:2000) {
+    LLTs <- array(0,dim=c(P,P,num_samps)) 
+    for (i in 1:num_samps) {
       LLTs[,,i] <- out$Lambda[[i]]%*%diag(A[s,])%*%t(out$Lambda[[i]])
     }
     Sigmas[[s]] <- apply(LLTs,c(1,2),mean)
   }
   
-  res <- nloptr(c(out$Lambda[[2000]]),eval_f=eval_f,eval_grad_f=eval_g,
+  res <- nloptr(c(out$Lambda[[num_samps]]),eval_f=eval_f,eval_grad_f=eval_g,
                 opts=list(algorithm='NLOPT_LD_LBFGS',maxeval=1000),
                 Sigmas=Sigmas,A=A) 
   return(array(res$solution,dim=c(P,K)))
